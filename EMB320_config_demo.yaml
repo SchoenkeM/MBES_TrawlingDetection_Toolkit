@@ -1,0 +1,25 @@
+# General configuration
+
+Import Settings:
+  Cruise Tag: EMB320
+  current Dir: '.\resources\emb320_xyz_demo'
+  Column Order: ['lon','lat','depth','beam','ping'] 
+  Input crs: 32632
+  Number of Sonar Beam: 1024
+  Tile Size in m: 10
+
+Refernce Surface: 
+  Filter Window Size in percentage: 20                                         # Percentage of window relative to Number of Sonar Beams
+  min number of Beams required: 100
+
+Filter Settings:
+  Exclude Beam Numbers: '0:250, 780:1024'                                      # beam Numner as sting e.g. '0:5, 250:512, 1000'
+  Exclude Buffer ID:                                                           # Percentage of window relative to Number of Sonar Beams '-1,-2,2,1' 
+  Vertical Detection Window in m: [-0.5, 0.5]                                  # clip values outside detection window, realative to mean surface
+  Vertical Statistical Deviation Window: 6
+
+Grid Settings:
+  Exclude detected Outliers: True
+  Grid Resolution in m: 0.25
+  min number of Points per Tile required: 500
+  treat Tile Overlaps: average
