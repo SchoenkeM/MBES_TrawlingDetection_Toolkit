@@ -1089,9 +1089,6 @@ class OutputHandler:
             valid_fids = fid_counts[fid_counts >= min_points].index
             filtered_data = data[data['fid'].isin(valid_fids)].copy()
             return filtered_data
-        
-        # Get config settings
-        gridding_method = self._grid_method
 
         # Get the stacking method ('average', 'first', or 'last')
         stacking_method =  self._stack_method
