@@ -47,10 +47,12 @@ class OutputHandler:
             - added point cloud basic statistic to geopackage   
             - remove redundant gridding function "grid_current_group"
             - rename griddig function "_get_single_grid" to" to  "_get_tile_grid" 
-              
+        Version 1.0.4
+            - added "gridding method" as config input paramter 
+            - added check to make sure valid gridding method is selected as input option     
         """
 
-        version = 'v1.0.3'
+        version = 'v1.0.4'
 
         self._log = log
         self.vararg2 = 'Output Handler'
@@ -62,6 +64,7 @@ class OutputHandler:
 
 
         self._grid_space = config._gridding_options['grid_Resolution_m']
+        self._grid_method= config._gridding_options['gridding_method']
         self._min_points_4_gridding = config._gridding_options['min_required_Points']
         self._tile_size = config.Tile_Size
         self._stack_method = config._gridding_options['treat_Tile_Overlaps']
@@ -227,32 +230,31 @@ class OutputHandler:
         #--- function calls
         function_handler()
 
-    def grid_tiles(self, grid_method = 'linear'):
+    def grid_tiles(self):
 
         self.arg1_ID = '[f400]'
-        self._grid_method= grid_method
 
-        def verbose_parameters(threshold, grid_method):
+        def verbose_parameters(threshold):
             # Feedback for input option here
             if threshold < 100:
                 self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,
-                      arg3=['\t- WARNING: current Threshold of {threshold} set very low.'])
+                      arg3=[f'\t- WARNING: current Threshold of {threshold} set very low.'])
 
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,
                         arg3=[f'\t- Tiles with number of data points < {threshold}, will be ignored. Threshold defined in config.'])
 
             # print grid option feedback
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,
-                        arg3=[f"\t- Gridding method selected: '{grid_method}'. Default is 'linear'."])
+                        arg3=[f"\t- Gridding method selected: '{self._grid_method}'. Default is 'linear'."])
 
-            if grid_method == 'cubic':
+            if self._grid_method == 'cubic':
                 txt= "\t- Using 'cubic' interpolation for smooth surface generation. Requires sufficient data points and may produce NaNs at boundaries."
-            elif grid_method == 'linear':
+            elif self._grid_method == 'linear':
                 txt= "\t- Using 'linear' interpolation for moderate accuracy with better boundary handling."
-            elif grid_method == 'nearest':
+            elif self._grid_method == 'nearest':
                 txt= "\t- Using 'nearest' interpolation, which assigns values from the closest data point. Fastest but less smooth."
             else:
-                txt= f"\t- Warning: '{grid_method}' is not a standard method. Ensure it is a valid scipy.griddata method."
+                txt= f"\t- Warning: '{self._grid_method}' is not a standard method. Ensure it is a valid scipy.griddata method."
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3=[txt])
 
         def get_parquet_filelist(fdir):
@@ -483,17 +485,22 @@ class OutputHandler:
 
             output_fullfile_pkl = os.path.join(wdir, f"{Data_Tag}_griddata.pkl")
 
-            # check if gridding method is valid
+            # check if stacking is valid
             options = ["first", "last", "average"]
             if not self._stack_method in options:
                 self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,
                               arg3=[f'\t- {self._stack_method} is not a valid gridding stacking option. Process aborted'])
                 return
 
-
+            options = ["cubic","linear","nearest"]
+            if not  self._grid_method in options:
+                self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,
+                              arg3=[f'\t- {self._grid_method} is not a valid gridding method option. Process aborted'])
+                return
+            
             stime = subr.tic()
             #---
-            verbose_parameters(threshold, grid_method)
+            verbose_parameters(threshold)
 
             # ---
             # returns Seires with parqwut file names to grid, which have not
@@ -760,8 +767,6 @@ class OutputHandler:
 
         function_handler()
 
-
-
     def export_statisics(self, threshold):
 
         self.arg1_ID = '[f600]'
@@ -829,7 +834,7 @@ class OutputHandler:
                 tile_gdf["Furrow_area"]   = round(tile_gdf["zz"].apply(lambda x: area_below_threshold(x,dx,threshold)),3)
                 tile_gdf["Mound_area"]    = round(tile_gdf["zz"].apply(lambda x: area_above_threshold(x,dx,threshold)),3)
 
-                tile_gdf["Furrow_Mound_diff"] = tile_gdf["Mound_Volume"] + tile_gdf["Furrow_Volume"]
+                tile_gdf["Furrow_Mound_diff"] = round((tile_gdf["Mound_Volume"] + tile_gdf["Furrow_Volume"]),3)
                 self._log.add(arg3='--> [success]')
 
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3='\t- Preparing the dataframe for conversion to geopackage...')
@@ -900,7 +905,6 @@ class OutputHandler:
         self._log.add(arg3=f" [{len(set(filtered_df['tile_id']))} Tiles detected]")
 
         return filtered_df
-
 
     def _get_nearest_neighbor_index(self, data, tile_length):
         """
@@ -1027,7 +1031,6 @@ class OutputHandler:
         z_std = round(np.std(valid_values),4)
 
         return  z_min,  z_max,  z_std
-
 
     def _get_surface_roughness(self, z_grid):
         """
@@ -1164,8 +1167,6 @@ class OutputHandler:
         z_grid : computes for a gridded surface and substract the mean
         """
         # get config settings
-        gridding_method = self._grid_method
-
         coords = np.column_stack((data["x"], data["y"]))
 
         # Substract reference surface
@@ -1175,7 +1176,7 @@ class OutputHandler:
         #z_residual = z_residual  - np.nanmean(z_residual)                                                 # Debug add remove mean
 
         z_grid = griddata(coords, z_residual, (xx_grid, yy_grid),
-                          method= gridding_method, fill_value=np.nan)
+                          method= self._grid_method, fill_value=np.nan)
 
         # Substract mean from surface
         if ~np.isnan(z_grid).all():
