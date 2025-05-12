@@ -27,7 +27,7 @@ class DataHandler:
         """
         Initializes the MBESDataHandler class.
         """
-        version = 'v.0.1.1'
+        version = 'v.1.0.1'
         
         self._log = log
         self.vararg2 = 'MBES Data Handler'

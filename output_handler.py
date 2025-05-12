@@ -30,11 +30,27 @@ import fastparquet  # is not direcly used but required for writing *.parquet fil
 class OutputHandler:
     def __init__(self, log, config):
         """
-        Initialize Processing Handler
-        Version 0.1.0
+        Initialize Processing Handler:
+        
+        Version 1.0.0
+            init version
+
+        Version 1.0.1
+            - fixed typos  
+        Version 1.0.2
+            - Implemented that the area coverage of mounds and furrows is tracked
+              accodingly
+        Version 1.0.3
+            - fixed mixed between manusctipt version from local and release version
+            - fixed version control number 
+            - added area computation to statistic values
+            - added point cloud basic statistic to geopackage   
+            - remove redundant gridding function "grid_current_group"
+            - rename griddig function "_get_single_grid" to" to  "_get_tile_grid" 
+              
         """
 
-        version = 'v.0.1.2'
+        version = 'v1.0.3'
 
         self._log = log
         self.vararg2 = 'Output Handler'
@@ -390,9 +406,10 @@ class OutputHandler:
                 coverage = self._get_pt_coverage_perc(data, dx, tile_size)
                 nni_out = self._get_nearest_neighbor_index(data, tile_size)
                 z_pt_min, z_pt_max, z_pt_std = self._get_basic_pt_stats(data)
-                # Compute gridded data
+
+                # Compute tile grid
                 if max(data["fid"]) == 1:
-                    z_grid = self._get_single_grids(data, xx_grid, yy_grid)
+                    z_grid = self._get_tile_grid(data, xx_grid, yy_grid)
                 else:
                     z_grid = self._get_average_grids(data, xx_grid, yy_grid)
 
@@ -521,8 +538,7 @@ class OutputHandler:
         Export grid to /temp folder
 
         """
-
-
+        
         self.arg1_ID = '[f500]'
 
         def get_global_bounds(tile_gdf, dx):
@@ -754,15 +770,25 @@ class OutputHandler:
             flat_values = list(chain.from_iterable(z_grid)) # Flatten nested list
             below_threshold = [x for x in flat_values if x < -threshold]  # Filter values below threshold
             volume = sum(below_threshold) * dx *dx
-            volume = np.round(volume,5)
             return volume  # Sum them
 
         def sum_above_threshold(z_grid, dx, threshold):
             flat_values = list(chain.from_iterable(z_grid))  # Flatten nested list
             above_threshold = [x for x in flat_values if x > threshold]  # Filter values below threshold
             volume = sum(above_threshold) * dx *dx
-            volume = np.round(volume,5)
-            return volume
+            return volume  # Sum them
+
+        def area_below_threshold(z_grid, dx, threshold ):
+            flat_values = list(chain.from_iterable(z_grid)) # Flatten nested list
+            below_threshold = [x for x in flat_values if x < -threshold]  # Filter values below threshold
+            area = len(below_threshold) * dx *dx
+            return area  # Sum them
+
+        def area_above_threshold(z_grid, dx, threshold ):
+            flat_values = list(chain.from_iterable(z_grid)) # Flatten nested list
+            above_threshold = [x for x in flat_values if x > threshold]  # Filter values below threshold
+            area = len(above_threshold) * dx *dx
+            return area  # Sum them
 
         def function_handler(threshold):
 
@@ -798,10 +824,12 @@ class OutputHandler:
             else:
                 self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3=f'\t- Threshold +/- {threshold}m selected. Compute trawling intensity in process...')
                 threshold = abs(threshold)
-                tile_gdf["Furrow_Volume"] = tile_gdf["zz"].apply(lambda x: sum_below_threshold(x,dx,threshold))
-                tile_gdf["Mound_Volume"] = tile_gdf["zz"].apply(lambda x: sum_above_threshold(x,dx,threshold))
+                tile_gdf["Furrow_Volume"] = round(tile_gdf["zz"].apply(lambda x: sum_below_threshold(x,dx,threshold)),3)
+                tile_gdf["Mound_Volume"]  = round(tile_gdf["zz"].apply(lambda x: sum_above_threshold(x,dx,threshold)),3)
+                tile_gdf["Furrow_area"]   = round(tile_gdf["zz"].apply(lambda x: area_below_threshold(x,dx,threshold)),3)
+                tile_gdf["Mound_area"]    = round(tile_gdf["zz"].apply(lambda x: area_above_threshold(x,dx,threshold)),3)
+
                 tile_gdf["Furrow_Mound_diff"] = tile_gdf["Mound_Volume"] + tile_gdf["Furrow_Volume"]
-                tile_gdf["Furrow_Mound_diff"] = np.round(tile_gdf["Furrow_Mound_diff"],5)
                 self._log.add(arg3='--> [success]')
 
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3='\t- Preparing the dataframe for conversion to geopackage...')
@@ -984,8 +1012,6 @@ class OutputHandler:
         return  z_grid_min,  z_grid_max,  z_grid_std
 
     def _get_basic_pt_stats(self, data):
-
-
         z = (data["depth"] - data["ref_depth"]).values
         z = z - np.nanmean(z)
 
@@ -1037,7 +1063,7 @@ class OutputHandler:
             Ra =  np.nan # error code
         return Rq, Ra
 
-    def _get_average_grids(self, data, xx_grid, yy_grid, min_points=10):       # debug org. 100 set to 10
+    def _get_average_grids(self, data, xx_grid, yy_grid, min_points=100):
         """
         Parameters
         ----------
@@ -1063,35 +1089,7 @@ class OutputHandler:
             valid_fids = fid_counts[fid_counts >= min_points].index
             filtered_data = data[data['fid'].isin(valid_fids)].copy()
             return filtered_data
-
-        def clip_extreme_vales(z_grid):
-            # in case of boundary problems clip values to nan
-            z_clipped = np.clip(z_grid, -1e5, 1e5)
-            z_grid[z_grid != z_clipped] = np.nan
-            return z_grid
-
-        def grid_current_group(group):
-
-            group_coords = np.column_stack((group["x"], group["y"]))
-
-            # get group mean averaged depth values
-            group_z = (group["depth"] - group["ref_depth"]).values
-
-            # Perform gridding
-            z_grid = griddata(group_coords, group_z, (xx_grid, yy_grid),
-                              method=gridding_method, fill_value=np.nan)
-
-            nr_valid_values = len(z_grid[~np.isnan(z_grid)])
-            if nr_valid_values>0:
-                z_grid = z_grid - np.nanmean(z_grid)
-
-                # round to 5th comma digit
-                z_grid = np.round(z_grid,5)                                           # Debug comment rounding
-
-                z_grid[z_grid==0] = 0.0001  # Ersetze alle 0-Werte
-
-            return z_grid
-
+        
         # Get config settings
         gridding_method = self._grid_method
 
@@ -1109,10 +1107,8 @@ class OutputHandler:
         # --- Iterate through groups ---
         for fid, group in filtered_data.groupby('fid'):
 
-            z_grid = grid_current_group(group)
+            z_grid = self._get_tile_grid(group, xx_grid, yy_grid )
 
-            # clip extreme vales outside
-            #z_grid = clip_extreme_vales(z_grid)                                #Debug removed clip from function
 
             # checks which vales are none
             is_nan = np.isnan(z_grid)
@@ -1159,7 +1155,7 @@ class OutputHandler:
         else:
             return np.full_like(xx_grid, np.nan, dtype=float)
 
-    def _get_single_grids(self, data, xx_grid, yy_grid):
+    def _get_tile_grid(self, data, xx_grid, yy_grid):
         """
         Parameters MISSING DESCRIPTION
         ----------
@@ -1170,7 +1166,6 @@ class OutputHandler:
         -------
         z_grid : computes for a gridded surface and substract the mean
         """
-
         # get config settings
         gridding_method = self._grid_method
 
@@ -1180,21 +1175,21 @@ class OutputHandler:
         z_residual = (data["depth"] - data["ref_depth"]).values
 
         # Substract mean from point cloud z_residual
-        z_residual = z_residual  - np.nanmean(z_residual)                                                 # Debug add remove mean
+        #z_residual = z_residual  - np.nanmean(z_residual)                                                 # Debug add remove mean
 
         z_grid = griddata(coords, z_residual, (xx_grid, yy_grid),
                           method= gridding_method, fill_value=np.nan)
 
-        nr_valid_values = len(z_grid[~np.isnan(z_grid)])
-
         # Substract mean from surface
-        if nr_valid_values>0:
+        if ~np.isnan(z_grid).all():
             z_grid = z_grid - np.nanmean(z_grid)
 
             # round to 5th comma digit
             z_grid = np.round(z_grid,5)                                           # Debug comment rounding
             z_grid[z_grid==0] = 0.0001  # Ersetze alle 0-Werte
-
+        else:
+            z_grid = np.full_like(xx_grid, np.nan, dtype=float)
+        
         return z_grid
 
     def _get_tile_gdf(self,data):
