@@ -21,5 +21,6 @@ Filter Settings:
 Grid Settings:
   Exclude detected Outliers: True
   Grid Resolution in m: 0.25
+  Gridding method: 'linear'
   min number of Points per Tile required: 500
   treat Tile Overlaps: average

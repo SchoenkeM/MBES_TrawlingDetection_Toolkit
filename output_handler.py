@@ -52,7 +52,7 @@ class OutputHandler:
             - added check to make sure valid gridding method is selected as input option     
         """
 
-        version = 'v1.0.4'
+        version = 'v.1.0.4'
 
         self._log = log
         self.vararg2 = 'Output Handler'
