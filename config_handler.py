@@ -8,7 +8,10 @@ class ConfigHandler:
     def __init__(self, config_file):
         """
         Initialize the configuration from a YAML file.
-        Version 0.1.2
+        Version 1.0.2 
+
+        Version 1.0.3
+            - added gridding method as input argument
         """
         with open(config_file, 'r') as file:
             config = yaml.safe_load(file)
@@ -75,6 +78,7 @@ class ConfigHandler:
         self._gridding_options = {
             'exclude_Outlier': config['Grid Settings']['Exclude detected Outliers'],
             'grid_Resolution_m': config['Grid Settings']['Grid Resolution in m'],
+            'gridding_method': config['Grid Settings']['Gridding method'],
             'min_required_Points': config['Grid Settings']['min number of Points per Tile required'],
             'treat_Tile_Overlaps': config['Grid Settings']['treat Tile Overlaps']
         }
