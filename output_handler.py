@@ -77,6 +77,7 @@ class OutputHandler:
         self._stack_method = config._gridding_options['treat_Tile_Overlaps']
         
         self._depth_threshold = config._export_options['feature_threshold_m']
+        self._no_data_value = config._export_options['no_data_value']
         
         # init parameter
         self._EU_Grid_crs = 3035

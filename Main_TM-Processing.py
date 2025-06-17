@@ -15,14 +15,10 @@ if not check_and_install_packages():
     sys.exit()
                                     
 # Enter a single file to be processed (only one file will be processed):
-#Config_List = 'EMB288_config_demo.yaml'
-#Config_list = 'EMB238_config_demo.yaml'
-#Config_List = 'EMB267_config_demo.yaml'
-#Config_List = 'EMB320_config_demo.yaml' 
-#Config_List = 'EMB345_config_demo.yaml' 
+Config_List = 'EMB267_config_demo.yaml'
 
-# of combine multiple files into a list to be processed:
-Config_List = ['EMB238_config_demo.yaml', 'EMB267_config_demo.yaml', 'EMB288_config_demo.yaml', 'EMB320_config_demo.yaml', 'EMB345_config_demo.yaml']  
+# Example of combine multiple files into a list to be processed:
+#Config_List = ['EMB238_config_demo.yaml', 'EMB267_config_demo.yaml', 'EMB288_config_demo.yaml', 'EMB320_config_demo.yaml', 'EMB345_config_demo.yaml']  
 
 # Threhold used to detect furrows and mounds within residual bathymerty in m. Is not specified within the individual config to make sure it is constant
 # across different datasets
@@ -43,10 +39,10 @@ Optional "execute_task" function input arguments:
 
 # Examples
 # If new txt files have been added or only the grid option has been changed, use the following line:
-# execute_task(Config_List,Threshold_Trawling_detection, update_import = True, update_processing = True)
+# execute_task(Config_List, update_import = True, update_processing = True)
 
 # If a new threshold is defined, use the following line to export the geopackage with the new threshold:
-# execute_task(Config_List,Threshold_Trawling_detection, update_gpkg= True)
+# execute_task(Config_List, update_gpkg= True)
 
 '''
 

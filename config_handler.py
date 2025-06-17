@@ -16,7 +16,8 @@ class ConfigHandler:
         Version 1.0.4
             - fix spelling error
             - add  Feature Segmentation Threshold to config file
-            - remove Buffer ID from config file    
+            - remove Buffer ID from config file
+            - add no data value for Tif file to config    
             
         """
         with open(config_file, 'r') as file:
@@ -40,14 +41,6 @@ class ConfigHandler:
         # make sure input options are valid 
         
         # Filter Settings
-        buffer_input = config['Filter Settings']['Exclude Buffer ID']
-        if  buffer_input is None: 
-            buffer_input = None
-        elif len(buffer_input)==0:
-            buffer_input = None
-        else:
-            buffer_input = self.parse_int_list(config['Filter Settings']['Exclude Buffer ID'])
-                    
         excl_beam_input = config['Filter Settings']['Exclude Beam Numbers']
         if excl_beam_input is None:
             excl_beam_input = None
@@ -93,7 +86,8 @@ class ConfigHandler:
             feature_thres = None
             
         self._export_options = {
-            'feature_threshold_m': feature_thres  
+            'feature_threshold_m': feature_thres,
+            'no_data_value': config['Export Settings']['No Data Value']    
         }
         
         # Generate a configuration filename with timestamp
