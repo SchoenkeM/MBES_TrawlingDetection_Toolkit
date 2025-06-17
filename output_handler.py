@@ -49,10 +49,14 @@ class OutputHandler:
             - rename griddig function "_get_single_grid" to" to  "_get_tile_grid" 
         Version 1.0.4
             - added "gridding method" as config input paramter 
-            - added check to make sure valid gridding method is selected as input option     
+            - added check to make sure valid gridding method is selected as input option
+        Version 1.0.5
+            - Refactored OutputHandler to import threshold from config instead of passing it as an input argument.
+            - removed feature option form "export_geotiff" and adapted promp msg accordingly
+            - Refactored export_statisics according to the changes concenring import threshold from config     
         """
 
-        version = 'v.1.0.4'
+        version = 'v.1.0.5'
 
         self._log = log
         self.vararg2 = 'Output Handler'
@@ -62,13 +66,14 @@ class OutputHandler:
         self._suffix = config._data_tag
         self._fdir = config._data_dir
 
-
         self._grid_space = config._gridding_options['grid_Resolution_m']
         self._grid_method= config._gridding_options['gridding_method']
         self._min_points_4_gridding = config._gridding_options['min_required_Points']
         self._tile_size = config.Tile_Size
         self._stack_method = config._gridding_options['treat_Tile_Overlaps']
-
+        
+        self._depth_threshold = config._export_option['feature_threshold_m']
+        
         # init parameter
         self._EU_Grid_crs = 3035
         self.tile_gdf = []
@@ -528,17 +533,12 @@ class OutputHandler:
 
         function_handler()
 
-    def export_geotiff(self, feature = 'residual_bathymetry', crs = 3035, nodata =9999):
+    def export_geotiff(self, crs = 3035, nodata =9999):
         """
         Export Options
         ----------
-        feature : The default is 'res_bathy'. Exports residual bathymerty if no
-                  feature is defind
-        threshold in meter: for feature detection
-
-        grid =  ['furrow', threshold]: exports furrow feature only
-        grid =  ['mound', threshold]: exports mound feature only
-        grid =  ['trawl_mark', threshold]: exports furrow and mound feature
+        nodata value to manual define alpha channel  
+        
 
         Returns
         -------
@@ -552,7 +552,7 @@ class OutputHandler:
 
             local_arg1_ID = '[f501]'
 
-            self._log.add(arg1=local_arg1_ID ,arg2=self.vararg2,arg3=['\t- Create global Grid to insert gridded data...'])
+            self._log.add(arg1=local_arg1_ID ,arg2=self.vararg2,arg3=['\t- Create global Grid to insert gridded tile data...'])
 
             data =  tile_gdf.bounds
             x_min= min(data['minx'])
@@ -590,17 +590,10 @@ class OutputHandler:
 
             return global_rows,global_cols,values
 
-        def loop_over_df(tile_gdf, dx, obj_type, threshold):
+        def loop_over_df(tile_gdf, dx):
 
             local_arg1_ID = '[f502]'
             [xx_bounds, yy_bounds] = get_global_bounds(tile_gdf, dx)
-
-            # Define filtering functions
-            FILTERS = {
-                "trawl_mark": lambda grid, threshold: np.where((grid > -threshold) | (grid < threshold), np.nan, grid),
-                "furrow": lambda grid, threshold: np.where(grid > -threshold, np.nan, grid),
-                "mound": lambda grid, threshold: np.where(grid < threshold, np.nan, grid),
-            }
 
             #---
             # Prepare global CRS sparse matrix
@@ -623,11 +616,6 @@ class OutputHandler:
                 #convert vector to grid
                 xx_grid, yy_grid = np.meshgrid(row["xx"], row["yy"])
                 z_grid = np.array(row["zz"][0]).reshape(row["grid_size"][0], row["grid_size"][1])
-
-                #---
-                # apply feature detection filter
-                if (obj_type in FILTERS) and isinstance(threshold, (int, float)):
-                    z_grid = FILTERS[obj_type](z_grid, threshold)
 
                 #---
                 # match local grid values with global sparse matrix
@@ -707,7 +695,7 @@ class OutputHandler:
             }
 
             time_str = subr.time_stamp()
-            output_path = fdir  + f"/{self._suffix}_{feature}_{time_str}.tif"
+            output_path = fdir  + f"/{self._suffix}_residual_bathymetry_{time_str}.tif"
 
             # Write the matrix to a GeoTIFF file
             with rasterio.open(output_path, "w", **raster_meta) as dst:
@@ -732,15 +720,7 @@ class OutputHandler:
             dx         = self._grid_space
             wdir       = self._grid_dir
             Data_Tag   = self._suffix
-            threshold  = None
             input_fullfile_pkl = os.path.join(wdir, f"{Data_Tag}_griddata.pkl")
-
-            if len(feature)==2:
-                feature_type = feature[0]
-                threshold = feature[1]
-            else:
-                feature_type = feature
-                threshold = None
 
             if not os.path.isfile( input_fullfile_pkl):
                 self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3='\t- WARNING: No gridded Tile Dataset. use ".grid_tiles" method first.')
@@ -757,17 +737,16 @@ class OutputHandler:
             #---
             # loop over tile grid to create global spare matrix
             stime = subr.tic()
-            global_matrix_csr, xx_global, yy_global = loop_over_df(tile_gdf, dx, feature_type, threshold)
+            global_matrix_csr, xx_global, yy_global = loop_over_df(tile_gdf, dx)
 
             # convert global spare matrix to grid
-            matrix_to_geotiff(output_dir, xx_global, yy_global, global_matrix_csr,
-                               feature_type, crs, nodata)
+            matrix_to_geotiff(output_dir, xx_global, yy_global, global_matrix_csr, crs, nodata)
 
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3=f'\t> Export GeoTIF completed [Elapse Time: {subr.toc(stime)}]')
 
         function_handler()
 
-    def export_statisics(self, threshold):
+    def export_statisics(self):
 
         self.arg1_ID = '[f600]'
 
@@ -795,7 +774,7 @@ class OutputHandler:
             area = len(above_threshold) * dx *dx
             return area  # Sum them
 
-        def function_handler(threshold):
+        def function_handler():
 
             print('\n#---',  end='', flush=True)
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3=['Export Statistic as Geopackage in process...'])
@@ -804,7 +783,8 @@ class OutputHandler:
             dx         = self._grid_space
             wdir       = self._grid_dir
             Data_Tag   = self._suffix
-
+            threshold  = self._depth_threshold
+            
             input_fullfile_pkl = os.path.join(wdir, f"{Data_Tag}_griddata.pkl")
 
             if not os.path.isfile( input_fullfile_pkl):
@@ -873,7 +853,7 @@ class OutputHandler:
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,
                           arg3=f'\t> Export Statistic as Geopackage completed [Elapse Time: {subr.toc(stime)}]')
 
-        function_handler(threshold)
+        function_handler()
 
     #--------------------------------------------------------------------------
     # Statistic functions

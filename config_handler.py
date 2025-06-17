@@ -12,22 +12,28 @@ class ConfigHandler:
 
         Version 1.0.3
             - added gridding method as input argument
+            
+        Version 1.0.4
+            - fix spelling error
+            - add  Feature Segmentation Threshold to config file
+            - remove Buffer ID from config file    
+            
         """
         with open(config_file, 'r') as file:
             config = yaml.safe_load(file)
 
         # Import Settings
         self._data_tag = config['Import Settings']['Cruise Tag']
-        self._data_dir = config['Import Settings']['current Dir']
+        self._data_dir = config['Import Settings']['Current Dir']
         self._data_columns = config['Import Settings']['Column Order']
         self._data_crs = config['Import Settings']['Input crs']
         self._Sonar_Nr_of_Beams = config['Import Settings']['Number of Sonar Beam']
         self.Tile_Size = config['Import Settings']['Tile Size in m']
-
+        
         # Reference Surface
         self._reference_surface = {
             'filter_window_in_perc': config['Refernce Surface']['Filter Window Size in percentage'],
-            'min_required_Beams': config['Refernce Surface']['min number of Beams required']
+            'min_required_Beams': config['Refernce Surface']['Min Number of Beams required']
         }
 
         #----
@@ -79,10 +85,18 @@ class ConfigHandler:
             'exclude_Outlier': config['Grid Settings']['Exclude detected Outliers'],
             'grid_Resolution_m': config['Grid Settings']['Grid Resolution in m'],
             'gridding_method': config['Grid Settings']['Gridding method'],
-            'min_required_Points': config['Grid Settings']['min number of Points per Tile required'],
-            'treat_Tile_Overlaps': config['Grid Settings']['treat Tile Overlaps']
+            'min_required_Points': config['Grid Settings']['Min number of Points per Tile required'],
+            'treat_Tile_Overlaps': config['Grid Settings']['Treat Tile Overlaps']
         }
 
+        feature_thres = config['Export Settings']['Feature Segmentation Threshold in m']
+        if feature_thres is None or feature_thres == '' or feature_thres == ' ' or feature_thres == [] or feature_thres == 0:
+            feature_thres = None
+            
+        self._export_options = {
+            'feature_threshold_m': feature_thres  
+        }
+        
         # Generate a configuration filename with timestamp
         if 'Config' in config_file[:-5] or 'config' in config_file[:-5]: 
             self._config_filename = f"{dtime.now().strftime('%Y%m%d-%H%M%S')}_{config_file[:-5]}.txt"
@@ -131,7 +145,7 @@ class ConfigHandler:
                         file.write(f"[{attr_name}]: {'.' * (30 - len(attr_name))} '{key}': {value}\n")
                     file.write("\n")  
 
-        print(f"\nConfiguration saved to {full_path}")
+        print(f"\nConfiguration saved to: {full_path}")
 
     def print_config(self):
         """
@@ -146,7 +160,6 @@ class ConfigHandler:
         print(f"[_data_crs]: {'.' * (30 - len('_data_crs'))} {self._data_crs}")
         print(f"[_Sonar_Nr_of_Beams]: {'.' * (30 - len('_Sonar_Nr_of_Beams'))} {self._Sonar_Nr_of_Beams}")
         print(f"[Tile_Size]: {'.' * (30 - len('Tile_Size'))} {self.Tile_Size}\n")
-        
         print(f"[config filename]: {'.' * (30 - len('config filename'))} {self._config_filename}\n")
         
         for attr_name, attr_value in self.__dict__.items():

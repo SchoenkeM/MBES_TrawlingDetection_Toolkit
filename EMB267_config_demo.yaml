@@ -2,25 +2,27 @@
 
 Import Settings:
   Cruise Tag: EMB267
-  current Dir: '.\resources\emb267_xyz_demo'
+  Current Dir: '.\resources\emb267_xyz_demo'
   Column Order: ['beam', 'lon', 'lat', 'depth', 'ping']
   Input crs: 32632
   Number of Sonar Beam: 1024
   Tile Size in m: 10
 
 Refernce Surface: 
-  Filter Window Size in percentage: 20                                         # Percentage of window relative to Number of Sonar Beams
-  min number of Beams required: 100
+  Filter Window Size in percentage: 20                                         # Percentage of observation window for averaging relative to Number of Sonar Beams
+  Min number of Beams required: 100
 
 Filter Settings:
-  Exclude Beam Numbers: '0:200, 820:1024'                                       # beam Numner as sting e.g. '0:5, 250:512, 1000'
-  Exclude Buffer ID:                                                           # Percentage of window relative to Number of Sonar Beams '-1,-2,2,1' 
-  Vertical Detection Window in m: [-0.5, 0.5]                                  # clip values outside detection window, realative to mean surface
-  Vertical Statistical Deviation Window: 6
+  Exclude Beam Numbers: '0:200, 820:1024'                                      # Beam Numner as sting e.g. '0:5, 250:512, 1000'
+  Vertical Detection Window in m: [-0.5, 0.5]                                  # marks x,y,z- values outside detection window range realative to the refrence surface (zero-mean) as outlier 
+  Vertical Statistical Deviation Window: 6                                     # marks x,y,z- values outside the standard deviation of the reference surface multiplied by the statisical window value as outlier
 
 Grid Settings:
   Exclude detected Outliers: True
   Grid Resolution in m: 0.25
   Gridding method: 'linear'
-  min number of Points per Tile required: 500
-  treat Tile Overlaps: average
+  Min Number of Points per Tile required: 500
+  Treat Tile Overlaps: average
+
+Export Settings:
+  Feature Segmentation Threshold in m: 0.05
