@@ -10,7 +10,7 @@ Import Settings:
 
 Refernce Surface: 
   Filter Window Size in percentage: 20                                         # Percentage of observation window for averaging relative to Number of Sonar Beams
-  Min number of Beams required: 100
+  Min Number of Beams required: 100
 
 Filter Settings:
   Exclude Beam Numbers: '0:200, 820:1024'                                      # Beam Numner as sting e.g. '0:5, 250:512, 1000'
@@ -26,3 +26,4 @@ Grid Settings:
 
 Export Settings:
   Feature Segmentation Threshold in m: 0.05
+  No Data Value: 9999

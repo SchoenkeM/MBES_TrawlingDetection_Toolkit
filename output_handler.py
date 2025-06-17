@@ -54,9 +54,13 @@ class OutputHandler:
             - Refactored OutputHandler to import threshold from config instead of passing it as an input argument.
             - removed feature option form "export_geotiff" and adapted promp msg accordingly
             - Refactored export_statisics according to the changes concenring import threshold from config     
+        Version 1.0.5.1
+            - Bug fixed due to Typos
+            - Removed Buffer ID Filter, by commenting relevant lines. It is computed, but not used in filter opperation
+            - Adding "No Data Values" to Config
         """
 
-        version = 'v.1.0.5'
+        version = 'v.1.0.5.1'
 
         self._log = log
         self.vararg2 = 'Output Handler'
@@ -72,7 +76,7 @@ class OutputHandler:
         self._tile_size = config.Tile_Size
         self._stack_method = config._gridding_options['treat_Tile_Overlaps']
         
-        self._depth_threshold = config._export_option['feature_threshold_m']
+        self._depth_threshold = config._export_options['feature_threshold_m']
         
         # init parameter
         self._EU_Grid_crs = 3035
@@ -533,7 +537,7 @@ class OutputHandler:
 
         function_handler()
 
-    def export_geotiff(self, crs = 3035, nodata =9999):
+    def export_geotiff(self, crs = 3035):
         """
         Export Options
         ----------
@@ -641,7 +645,7 @@ class OutputHandler:
 
             return global_matrix_csr, xx_global, yy_global
 
-        def matrix_to_geotiff(fdir, xx_global, yy_global, global_matrix_csr, feature, crs, nodata_value):
+        def matrix_to_geotiff(fdir, xx_global, yy_global, global_matrix_csr, crs):
             """
             Exports a sparse CSR matrix as a GeoTIFF file with a given CRS.
             Parameters:
@@ -668,7 +672,7 @@ class OutputHandler:
             mask_unset = global_matrix_csr.tocoo().toarray() == 0  # True for missing values
 
             # Apply NoData value only to originally unset elements
-            global_matrix_dense[mask_unset] = nodata_value
+            global_matrix_dense[mask_unset] = self._no_data_value
 
             # the coordinate system anchor point is defined bot-left, but
             # the geofiff functio expects top-left, so the matrix needs to be
@@ -691,7 +695,7 @@ class OutputHandler:
                 "dtype": global_matrix_dense.dtype,
                 "crs": f"EPSG:{crs}",  # Coordinate Reference System
                 "transform": transform,
-                "nodata": nodata_value  # Set NoData value for transparency
+                "nodata":  self._no_data_value  # Set NoData value for transparency
             }
 
             time_str = subr.time_stamp()
@@ -709,7 +713,7 @@ class OutputHandler:
         def function_handler():
 
             # global variables defined in input with default values:
-            # feature, crs, nodata, rm_buffer_id
+            # crs
 
             print('\n#---',  end='', flush=True)
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3=['Export Tile data to Geotiff in process...'])
@@ -720,6 +724,7 @@ class OutputHandler:
             dx         = self._grid_space
             wdir       = self._grid_dir
             Data_Tag   = self._suffix
+            
             input_fullfile_pkl = os.path.join(wdir, f"{Data_Tag}_griddata.pkl")
 
             if not os.path.isfile( input_fullfile_pkl):
@@ -740,7 +745,7 @@ class OutputHandler:
             global_matrix_csr, xx_global, yy_global = loop_over_df(tile_gdf, dx)
 
             # convert global spare matrix to grid
-            matrix_to_geotiff(output_dir, xx_global, yy_global, global_matrix_csr, crs, nodata)
+            matrix_to_geotiff(output_dir, xx_global, yy_global, global_matrix_csr, crs)
 
             self._log.add(arg1=self.arg1_ID ,arg2=self.vararg2,arg3=f'\t> Export GeoTIF completed [Elapse Time: {subr.toc(stime)}]')
 

@@ -26,7 +26,6 @@ Config_List = ['EMB238_config_demo.yaml', 'EMB267_config_demo.yaml', 'EMB288_con
 
 # Threhold used to detect furrows and mounds within residual bathymerty in m. Is not specified within the individual config to make sure it is constant
 # across different datasets
-Threshold_Trawling_detection = 0.05
 
 '''    
 Optional "execute_task" function input arguments:
@@ -52,7 +51,7 @@ Optional "execute_task" function input arguments:
 '''
 
 # starts processing
-execute_task(Config_List,Threshold_Trawling_detection, update_import = True)
+execute_task(Config_List, update_import = True)
 
 
 

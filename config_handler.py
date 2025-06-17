@@ -75,7 +75,6 @@ class ConfigHandler:
             
         self._filter_options = {
             'exclude_Beam_Numbers': excl_beam_input,
-            'exclude_Buffer_ID': buffer_input,
             'detection_Window_Range': detec_win_input,
             'max_allowed_vertical_distribution':dev_win_input
         }
@@ -85,7 +84,7 @@ class ConfigHandler:
             'exclude_Outlier': config['Grid Settings']['Exclude detected Outliers'],
             'grid_Resolution_m': config['Grid Settings']['Grid Resolution in m'],
             'gridding_method': config['Grid Settings']['Gridding method'],
-            'min_required_Points': config['Grid Settings']['Min number of Points per Tile required'],
+            'min_required_Points': config['Grid Settings']['Min Number of Points per Tile required'],
             'treat_Tile_Overlaps': config['Grid Settings']['Treat Tile Overlaps']
         }
 
@@ -119,14 +118,6 @@ class ConfigHandler:
             else:
                 result.append(int(part))
         return result
-
-    @staticmethod
-    def parse_int_list(int_list_str):
-        """
-        Convert a comma-separated string of integers into a list.
-        Example: '-1,-2,2,1' → [-1, -2, 2, 1]
-        """
-        return [int(x.strip()) for x in int_list_str.split(',')]
 
     def save_config(self):
         """

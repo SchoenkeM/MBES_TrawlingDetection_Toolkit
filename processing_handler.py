@@ -39,7 +39,7 @@ class ProcessingHandler:
         self._filter_len = config._reference_surface['filter_window_in_perc']
         
         self._filter_beam_nr = config._filter_options['exclude_Beam_Numbers']
-        self._filter_buffer_id = config._filter_options['exclude_Buffer_ID']
+        #self._filter_buffer_id = config._filter_options['exclude_Buffer_ID']
         self._vertical_detection_range = config._filter_options['detection_Window_Range']
         self._vertical_detection_intervall = config._filter_options['max_allowed_vertical_distribution']
         
@@ -108,7 +108,7 @@ class ProcessingHandler:
             #--- Call various Filter Functions
             self._exclude_beam_nr(data)
  
-            self._exclude_buffer_ids(data)
+            #self._exclude_buffer_ids(data)
             
             self._apply_detection_window(data)
 
@@ -351,6 +351,7 @@ class ProcessingHandler:
         self._log.add(arg1=local_ID,arg2=self.vararg2,
         arg3=f'\t\t  Number of excluded Footprints by Beam number: {sum(bool_vec)} [{Outlier_Per:.2f}%] ')
     
+    """
     def _exclude_buffer_ids(self, data):
         '''
         In Progress
@@ -393,6 +394,7 @@ class ProcessingHandler:
         self._log.add(arg3=f'--> success [Elapse Time: {subr.toc(stime)}]')
         self._log.add(arg1=local_ID,arg2=self.vararg2,
         arg3=f'\t\t  Number of excluded Footprints by Tile Buffer id: {sum(bool_vec)} [{Outlier_Per:.2f}%] ')    
+    """
     
     def _apply_detection_window(self, data):
         """

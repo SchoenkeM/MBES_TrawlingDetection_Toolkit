@@ -10,7 +10,7 @@ from data_handler import DataHandler
 from processing_handler import ProcessingHandler
 from output_handler import OutputHandler
 
-def execute_task(config_files, Threshold_Trawling_detection = None, update_import = False, update_processing = False, update_tif= False, update_gpkg= False, make_tiles = True):
+def execute_task(config_files, update_import = False, update_processing = False, update_tif= False, update_gpkg= False, make_tiles = True):
 
     # in case export update is defined, skipp processing stepts and only 
     # update export
@@ -51,7 +51,7 @@ def execute_task(config_files, Threshold_Trawling_detection = None, update_impor
             
             # If update_gpkg is true
             if update_gpkg:
-                Output_handler.export_statisics(threshold=Threshold_Trawling_detection)  # Export statistics
+                Output_handler.export_statisics()  # Export statistics
                 
         else:       
             # converts txt2df
@@ -64,7 +64,7 @@ def execute_task(config_files, Threshold_Trawling_detection = None, update_impor
                 Output_handler.compile_tiles()  # Compile tiles
             Output_handler.grid_tiles()  # Grid tiles
             Output_handler.export_geotiff()  # Export to GeoTIFF
-            Output_handler.export_statisics(threshold=Threshold_Trawling_detection)  # Export statistics
+            Output_handler.export_statisics()  # Export statistics
 
         #Save configuration and log
         config.save_config()
