@@ -62,6 +62,9 @@ class OutputHandler:
         Version 1.0.6 
             - add filter function to interpolate outliers by nearest neighbor median that occur after the gridden 
             - add a threshold value, that only objects consisting of at least 2 pixels are taken into account
+        Version 1.0.6.1
+            - fix bug in median_filter function. Causing crash if size detection window is > 2     
+            
         """
         
         version = 'v.1.0.6'
@@ -255,7 +258,7 @@ class OutputHandler:
             if self._vertical_detection_range is None: 
                 return grid_values
             
-            mask = (grid_values > self._vertical_detection_range) | (grid_values< -self._vertical_detection_range)           
+            mask = (grid_values > max(self._vertical_detection_range)) | (grid_values< min(self._vertical_detection_range))           
             if not np.any(mask):
                 return grid_values
             
