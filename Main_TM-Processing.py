@@ -20,8 +20,6 @@ Config_List = 'EMB267_config_demo.yaml'
 # Example of combine multiple files into a list to be processed:
 #Config_List = ['EMB238_config_demo.yaml', 'EMB267_config_demo.yaml', 'EMB288_config_demo.yaml', 'EMB320_config_demo.yaml', 'EMB345_config_demo.yaml']  
 
-# Threhold used to detect furrows and mounds within residual bathymerty in m. Is not specified within the individual config to make sure it is constant
-# across different datasets
 
 '''    
 Optional "execute_task" function input arguments:

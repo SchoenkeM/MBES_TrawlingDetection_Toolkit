@@ -123,7 +123,7 @@ class ProcessingHandler:
             
             #-- save Outlier values to file_df 
             data.attrs['Applied_Filter'] = self.applied_Filter
-            data.attrs['Nr_of_Outliers']= number_of_outliers 
+            data.attrs['Nr_of_Outliers'] = number_of_outliers 
             
             data['outliers'] = self.outlier_df['total_Outliers']
             
@@ -306,7 +306,6 @@ class ProcessingHandler:
               arg3=f'\t\t  Total number of Footprints outside threshold: {sum(bool_vec)} [{Outlier_Per:.2f}%]')
 
         return z_ref        
-
 
     def _exclude_beam_nr(self, data):
         '''
@@ -561,7 +560,6 @@ class ProcessingHandler:
 
         # Update 'total_Outliers' based on any True values in other columns
         self.outlier_df['total_Outliers'] = self.outlier_df.drop(columns=['total_Outliers']).any(axis=1)
-
 
     def _save_current_df(self,df,output_fullfile):
         

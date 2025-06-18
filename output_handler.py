@@ -20,6 +20,7 @@ from shapely.geometry import Polygon
 from scipy.interpolate import griddata
 from scipy.sparse import coo_matrix
 from scipy.spatial import cKDTree
+from scipy.ndimage import generic_filter
 
 import rasterio
 from rasterio.transform import from_origin
@@ -58,9 +59,12 @@ class OutputHandler:
             - Bug fixed due to Typos
             - Removed Buffer ID Filter, by commenting relevant lines. It is computed, but not used in filter opperation
             - Adding "No Data Values" to Config
+        Version 1.0.6 
+            - add filter function to interpolate outliers by nearest neighbor median that occur after the gridden 
+            - add a threshold value, that only objects consisting of at least 2 pixels are taken into account
         """
-
-        version = 'v.1.0.5.1'
+        
+        version = 'v.1.0.6'
 
         self._log = log
         self.vararg2 = 'Output Handler'
@@ -75,6 +79,7 @@ class OutputHandler:
         self._min_points_4_gridding = config._gridding_options['min_required_Points']
         self._tile_size = config.Tile_Size
         self._stack_method = config._gridding_options['treat_Tile_Overlaps']
+        self._vertical_detection_range = config._filter_options['detection_Window_Range']
         
         self._depth_threshold = config._export_options['feature_threshold_m']
         self._no_data_value = config._export_options['no_data_value']
@@ -243,6 +248,20 @@ class OutputHandler:
     def grid_tiles(self):
 
         self.arg1_ID = '[f400]'
+
+        
+        def median_filter(grid_values):
+            # Compute median of neighbors for each cell
+            if self._vertical_detection_range is None: 
+                return grid_values
+            
+            mask = (grid_values > self._vertical_detection_range) | (grid_values< -self._vertical_detection_range)           
+            if not np.any(mask):
+                return grid_values
+            
+            median_grid = generic_filter(grid_values, self._median_surrounding, size=3, mode='nearest')  
+            filtered_grid = np.where(mask, median_grid, grid_values)
+            return np.median(filtered_grid)
 
         def verbose_parameters(threshold):
             # Feedback for input option here
@@ -414,7 +433,6 @@ class OutputHandler:
                     counter += 1
                     continue
 
-
                 coverage = self._get_pt_coverage_perc(data, dx, tile_size)
                 nni_out = self._get_nearest_neighbor_index(data, tile_size)
                 z_pt_min, z_pt_max, z_pt_std = self._get_basic_pt_stats(data)
@@ -425,6 +443,9 @@ class OutputHandler:
                 else:
                     z_grid = self._get_average_grids(data, xx_grid, yy_grid)
 
+                # ensure no data outside detection window is passed to grid
+                z_grid = median_filter(z_grid)
+                
                 # Compute metadata
                 rq, ra = self._get_surface_roughness(z_grid)
                 valid_values = len(z_grid[~np.isnan(z_grid)])
@@ -759,25 +780,38 @@ class OutputHandler:
         def sum_below_threshold(z_grid, dx, threshold ):
             flat_values = list(chain.from_iterable(z_grid)) # Flatten nested list
             below_threshold = [x for x in flat_values if x < -threshold]  # Filter values below threshold
-            volume = sum(below_threshold) * dx *dx
+            if len(below_threshold)<=2:
+                volume = 0
+            else:  
+                volume = sum(below_threshold) * dx *dx
             return volume  # Sum them
 
         def sum_above_threshold(z_grid, dx, threshold):
             flat_values = list(chain.from_iterable(z_grid))  # Flatten nested list
             above_threshold = [x for x in flat_values if x > threshold]  # Filter values below threshold
-            volume = sum(above_threshold) * dx *dx
+            if len(above_threshold)<=2:
+                volume = 0
+            else:          
+                volume = sum(above_threshold) * dx *dx
             return volume  # Sum them
 
         def area_below_threshold(z_grid, dx, threshold ):
             flat_values = list(chain.from_iterable(z_grid)) # Flatten nested list
             below_threshold = [x for x in flat_values if x < -threshold]  # Filter values below threshold
-            area = len(below_threshold) * dx *dx
+            if len(below_threshold)<=2:
+                area = 0
+            else:          
+                area = len(below_threshold) * dx *dx
             return area  # Sum them
 
         def area_above_threshold(z_grid, dx, threshold ):
             flat_values = list(chain.from_iterable(z_grid)) # Flatten nested list
             above_threshold = [x for x in flat_values if x > threshold]  # Filter values below threshold
             area = len(above_threshold) * dx *dx
+            if len(above_threshold)<=2:
+                area = 0
+            else:          
+                area = len(above_threshold) * dx *dx
             return area  # Sum them
 
         def function_handler():
@@ -863,6 +897,13 @@ class OutputHandler:
 
     #--------------------------------------------------------------------------
     # Statistic functions
+
+    def _median_surrounding(self, z_grid):
+        """
+        Remove the center value and compute median of the 8 neighbors
+        """
+        neighbors = np.delete(z_grid, len(z_grid) // 2)
+        return np.median(neighbors)
 
     def _get_filtered_df(self, df):
         """
