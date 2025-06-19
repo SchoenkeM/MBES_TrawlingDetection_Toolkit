@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Apr  3 11:41:27 2024
-version 1.0.3
+version 1.0.4
 @author: mischa reineccius-schonke
 """
 
 # Import package checker
 import sys
 from execute_task_fct import execute_task
-from package_checker import check_and_install_packages
+from package_checker import check_packages_and_package_version
 
 # Run package check
-if not check_and_install_packages():
+if not check_packages_and_package_version():
     sys.exit()
                                     
 # Enter a single file to be processed (only one file will be processed):
