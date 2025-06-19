@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Apr 10 14:56:20 2024
-v.0.1.1
+v.1.0.1
 @author: misch
 """
 

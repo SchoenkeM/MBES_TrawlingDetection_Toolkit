@@ -69,7 +69,7 @@ def execute_task(config_files, opperation_procedure):
 
     for config_file in config_files:
         
-        print(f"Processing with config: {config_file}")  # Log progress
+        print(f"\n>> Start processing using config: {config_file}")  # Log progress
         #______________________________________________________________________
         # Initialize Classes
        

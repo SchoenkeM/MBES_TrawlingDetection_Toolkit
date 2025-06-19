@@ -49,7 +49,7 @@ class Actionlog:
                                     f'active Logfile: {self._logfile_name}']))
         })
         if self._flash_log:
-            print('\n')
+            #print('\n')
             print('#---')
             print('Call Class: "actionlog"')
             self.out()
