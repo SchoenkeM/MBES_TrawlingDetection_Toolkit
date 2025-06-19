@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Apr 12 15:19:21 2024
-v 0.9.3, Global evaluation 10
+v 0.9.4, Global evaluation 10
 @author: misch
 """
 from datetime import datetime as dtime
@@ -34,6 +34,9 @@ class Actionlog:
     """
 
     def __init__(self):
+        
+        version = 'v.1.0.0'
+        
         self._logfile_name = f"Logfile_{dtime.now().strftime('%Y%m%d-%H%M%S')}"
         self._autosave_log = True
         self._flash_log = True  # toggle
@@ -45,12 +48,12 @@ class Actionlog:
             'Time': [dtime.now().strftime('%H%M%S')],
             'Action': ['[init]'],
             'Opperation': ['Actionlog Function'],
-            'Feedback': (', '.join(['Success',
-                                    f'active Logfile: {self._logfile_name}']))
+            'Feedback': [f'Initialize... {version}, --> active {self._logfile_name}']
+                                    
         })
         if self._flash_log:
             #print('\n')
-            print('#---')
+            #print('#---')
             print('Call Class: "actionlog"')
             self.out()
             
@@ -218,8 +221,7 @@ class Actionlog:
                     # Write the formatted row to the CSV file
                     file.write(formatted_row + "\n")
 
-            print(f"\n|--> Log File has been written to '{fullfile}' "
-                  f"successfully.")
+            print(f">> Log File has been written to: '{fullfile}'")
             self._hold = False
         else:
             print(f"\nError: Failed to write log data"

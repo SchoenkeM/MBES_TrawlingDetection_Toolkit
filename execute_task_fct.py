@@ -69,7 +69,8 @@ def execute_task(config_files, opperation_procedure):
 
     for config_file in config_files:
         
-        print(f"\n>> Start processing using config: {config_file}")  # Log progress
+        print('\n#---')
+        print(f">> Start processing using config: {config_file}")  # Log progress
         #______________________________________________________________________
         # Initialize Classes
        
@@ -119,9 +120,10 @@ def execute_task(config_files, opperation_procedure):
 
 
         #Save configuration and log
+        print('\n#---')
         config.save_config()
         log.write_to_csv(path=config._data_dir + '/output')
     
-        print(f"Completed processing for: {config_file}\n\n" + "-" * 50)  
+        print(f"Completed processing for: {config_file}\n\n" + "-" * 75)  
         
     

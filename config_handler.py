@@ -130,7 +130,7 @@ class ConfigHandler:
                         file.write(f"[{attr_name}]: {'.' * (30 - len(attr_name))} '{key}': {value}\n")
                     file.write("\n")  
 
-        print(f"\nConfiguration saved to: {full_path}")
+        print(f">> Configuration saved to: {full_path}")
 
     def print_config(self):
         """

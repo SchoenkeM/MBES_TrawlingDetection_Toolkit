@@ -30,7 +30,7 @@ def check_packages_and_package_version():
         "fastparquet": "2024.2.0"
     }
 
-    print("\n\n\n-" * 75 )
+    print("\n\n\n" + "-" * 75 )
     print(">> Checking the compatibility of the current environment")
     
     missing_or_outdated = []
@@ -71,7 +71,7 @@ def check_packages_and_package_version():
     else:
         print("\n🎉 All required packages are installed and meet version requirements.")
     
-    print("-" * 75 + "\n" )
+    print("-" * 75)
      
     return True
 
