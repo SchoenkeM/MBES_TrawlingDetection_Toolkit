@@ -9,7 +9,7 @@ For all users who want to work outside spider, make sure the following packages 
 
 # How to use the demo version 
 
-1) For demonstration purposes, there are some datasets in the resource folder. Each Dataset must first be unpacked and stay inside in the resource folder. 
+1) For demonstration purposes, a demo file is provided in the resource folder. The demo file in the resource folder is relatively linked to the config file. 
 
 2) The structure of the demo version should look like this after downloading the repository. 
 
@@ -17,10 +17,11 @@ For all users who want to work outside spider, make sure the following packages 
         
         |-Resources (folder)/
             |
-            |- emb267_xyz_demo (folder)/ (containing 2 *txt-files)
+            |- emb267_xyz_demo (folder)
+                   |- 0074_20210610 - 0002_42_demo.txt
         |
         |- Main_TM-Processing.py (only execute this function to run everything)
-        |- package_checker (if not using spyder the lines 14/15 in "Main_Processing.py" can be commented out)
+        |- package_checker
         |- actionlog.py
         |- config_handler.py
         |- data_handler.py
